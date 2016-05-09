@@ -128,6 +128,7 @@ namespace gr {
       double _center_freq;
       gr_complex SampBuffArray[MAX_SAMP_RATE];// 数据缓存矩阵
       gr_complex TriThreshold;// 触发阈值
+      //
 
       boost::recursive_mutex d_mutex;
     };
