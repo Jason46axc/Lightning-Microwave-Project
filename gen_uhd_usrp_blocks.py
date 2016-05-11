@@ -348,7 +348,7 @@ self.\$(id).set_gain(\$gain$(n), $n)
 		<name>Trigger Threshold</name>
 		<key>threshold</key>
 		<value>threshold</value>
-		<type>double</type>
+		<type>float</type>
 	</param>
 	$params
 	<check>$max_nchan >= \$nchan</check>
