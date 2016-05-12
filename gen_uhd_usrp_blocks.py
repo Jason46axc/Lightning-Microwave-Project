@@ -67,7 +67,7 @@ self.\$(id).set_time_unknown_pps(uhd.time_spec())
 self.\$(id).set_time_now(uhd.time_spec(time.time()), uhd.ALL_MBOARDS)
 \#end if
 self.\$(id).set_samp_rate(\$samp_rate)
-self.\$(id).set_threshold(\$threshold)
+\$threshold
 #for $n in range($max_nchan)
 \#if \$nchan() > $n
 self.\$(id).set_center_freq(\$center_freq$(n), $n)
@@ -94,7 +94,6 @@ self.\$(id).set_auto_iq_balance(\$iq_imbal_enb$(n), $n)
 #end for
 </make>
 	<callback>set_samp_rate(\$samp_rate)</callback>
-	<callback>set_threshold(\$threshold)</callback>
 	#for $n in range($max_nchan)
 	<callback>set_center_freq(\$center_freq$(n), $n)</callback>
 	<callback>\#if \$norm_gain${n}()
@@ -347,7 +346,7 @@ self.\$(id).set_gain(\$gain$(n), $n)
 	<param>
 		<name>Trigger Threshold</name>
 		<key>threshold</key>
-		<value>threshold</value>
+		<value></value>
 		<type>float</type>
 	</param>
 	$params
@@ -626,3 +625,4 @@ if __name__ == '__main__':
 			sourk=sourk,
 			direction=direction,
 		))
+

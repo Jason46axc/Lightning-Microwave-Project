@@ -26,6 +26,11 @@
 #include <boost/thread/thread.hpp>
 #include <boost/make_shared.hpp>
 #include <stdexcept>
+#include <iostream>
+#include <string>
+#include <ctime>
+#include <cstdio>
+#include <fstream>
 
 namespace gr {
   namespace uhd {
@@ -59,6 +64,7 @@ namespace gr {
         (new usrp_source_impl(device_addr, stream_args_ensure(stream_args)));
     }
 
+	// 构造函数！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
     usrp_source_impl::usrp_source_impl(const ::uhd::device_addr_t &device_addr,
                                        const ::uhd::stream_args_t &stream_args):
       usrp_block("gr uhd usrp source",
@@ -73,6 +79,13 @@ namespace gr {
 
       _samp_rate = this->get_samp_rate();
       _center_freq = this->get_center_freq(0);
+      
+		FullBuffSize = (unsigned long)_samp_rate;// 总存储数=每秒采样的点数
+		PreBuffSize = FullBuffSize / 10;// 预缓存数=100ms采样的点数
+		Counter = 0;// 计数器清零
+		TriPos = 0;// 标记清零
+		TriFlag = false;// 重置标志
+      
 #ifdef GR_UHD_USE_STREAM_API
       _samps_per_packet = 1;
 #endif
@@ -361,6 +374,13 @@ namespace gr {
       _start_time_set = true;
       _stream_now = false;
     }
+	
+	// 设置触发阈值！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+	void 
+	usrp_source_impl::set_threshold(double threshold)
+	{
+		TriThreshold = threshold;
+	}
 
     void
     usrp_source_impl::issue_stream_cmd(const ::uhd::stream_cmd_t &cmd)
@@ -488,8 +508,8 @@ namespace gr {
       throw std::runtime_error("not implemented in this version");
 #endif
     }
-
-	// work方法
+    
+	// work方法！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
     int
     usrp_source_impl::work(int noutput_items,
                            gr_vector_const_void_star &input_items,
@@ -522,6 +542,44 @@ namespace gr {
 #endif
 
 		// 处理数据
+		std::complex<double> *out = (std::complex<double> *) output_items[0];
+		double tmp;
+		for (int i = 0; i < noutput_items; i++)
+		{
+			if (TriFlag == false)
+			{
+				tmp = std::abs(out[i]);
+				if (tmp > TriThreshold)
+				{
+					TriFlag = true;
+					TriPos = Counter;
+					Counter = PreBuffSize;	
+				}
+				else
+				{
+					if (Counter >= PreBuffSize)
+					{
+						Counter = 0;
+					}
+				}
+				SampBuffArray[Counter++] = tmp;
+			}
+			else
+			{
+				if (Counter < FullBuffSize)
+				{
+					SampBuffArray[Counter++] = std::abs(out[i]);
+				}
+				else
+				{
+					save_buff_to_file();
+					TriFlag = false;
+					TriPos = 0;
+					Counter = 0;
+					break;
+				}
+			}
+		}
 		
 		
       //handle possible errors conditions
@@ -572,6 +630,33 @@ namespace gr {
           "", "UHD Commands",
           RPC_PRIVLVL_MIN, DISPNULL)));
 #endif /* GR_CTRLPORT */
+    }
+    
+    // 保存文件的方法
+    void
+    usrp_source_impl::save_buff_to_file()
+    {
+		time_t epochTime = _dev->get_mboard_sensor("gps_time", 0).to_int();
+		struct tm * utcTime = gmtime(&epochTime);
+		char dateTime[50];
+		sprintf(dateTime, "%4d%02d%02d%02d%02d%02d", utcTime->tm_year, utcTime->tm_mon, utcTime->tm_mday, utcTime->tm_hour, utcTime->tm_min, utcTime->tm_sec);
+		std::string fileName = "./data/" + (std::string)dateTime + ".dat";
+		std::ofstream ofs;
+		ofs.open(fileName.c_str(), std::ofstream::out | std::ofstream::binary);
+		for (long i = TriPos; i < PreBuffSize; i++)
+		{
+			
+			ofs.write((char*)&SampBuffArray[i], sizeof(SampBuffArray[i]));
+		}
+		for (long i = 0; i < TriPos; i++)
+		{
+			ofs.write((char*)&SampBuffArray[i], sizeof(SampBuffArray[i]));
+		}
+		for (long i = PreBuffSize; i < FullBuffSize; i++)
+		{
+			ofs.write((char*)&SampBuffArray[i], sizeof(SampBuffArray[i]));
+		}
+		ofs.close();
     }
 
   } /* namespace uhd */
