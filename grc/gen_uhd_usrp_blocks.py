@@ -347,7 +347,7 @@ self.\$(id).set_gain(\$gain$(n), $n)
 	<param>
 		<name>Trigger Threshold</name>
 		<key>threshold</key>
-		<value>threshold</value>
+		<value></value>
 		<type>float</type>
 	</param>
 	$params
@@ -626,3 +626,4 @@ if __name__ == '__main__':
 			sourk=sourk,
 			direction=direction,
 		))
+

@@ -24,13 +24,11 @@
 #include <gnuradio/uhd/usrp_source.h>
 #include <uhd/convert.hpp>
 #include <boost/thread/mutex.hpp>
-#include <gnuradio/math.h>
-#include <gnuradio/gr_complex.h>
 
 static const pmt::pmt_t TIME_KEY = pmt::string_to_symbol("rx_time");
 static const pmt::pmt_t RATE_KEY = pmt::string_to_symbol("rx_rate");
 static const pmt::pmt_t FREQ_KEY = pmt::string_to_symbol("rx_freq");
-static const long MAX_SAMP_RATE = 25000000; // 最大采样率
+static const unsigned long MAX_SAMP_RATE = 25000000; // 最大采样率
 
 namespace gr {
   namespace uhd {
@@ -98,6 +96,8 @@ namespace gr {
       void set_iq_balance(const std::complex<double> &correction, size_t chan);
       void set_stream_args(const ::uhd::stream_args_t &stream_args);
       void set_start_time(const ::uhd::time_spec_t &time);
+      
+      void set_threshold(double threshold);// 设置触发阈值
 
       void issue_stream_cmd(const ::uhd::stream_cmd_t &cmd);
       void flush(void);
@@ -110,6 +110,8 @@ namespace gr {
                gr_vector_void_star &output_items);
 
       void setup_rpc();
+      
+      void save_buff_to_file();// 保存文件
 
     private:
       //! Like set_center_freq(), but uses _curr_freq and _curr_lo_offset
@@ -123,12 +125,16 @@ namespace gr {
       ::uhd::rx_metadata_t _metadata;
       pmt::pmt_t _id;
 
-      //tag shadows
-      double _samp_rate;
-      double _center_freq;
-      gr_complex SampBuffArray[MAX_SAMP_RATE];// 数据缓存矩阵
-      gr_complex TriThreshold;// 触发阈值
-      //
+		//tag shadows
+		double _samp_rate;// 采样率
+		double _center_freq;// 中心频率
+		double TriThreshold;// 触发阈值
+		double SampBuffArray[MAX_SAMP_RATE];// 数据缓存矩阵
+		long int PreBuffSize;// 预缓存数
+		long int FullBuffSize;// 总存储数
+		long int Counter;// 计数器
+		long int TriPos;// 触发位置
+		bool TriFlag;// 触发标记
 
       boost::recursive_mutex d_mutex;
     };
