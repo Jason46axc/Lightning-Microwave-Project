@@ -85,6 +85,7 @@ namespace gr {
 		Counter = 0;// 计数器清零
 		TriPos = 0;// 标记清零
 		TriFlag = false;// 重置标志
+		TriThreshold = 0.1;
       
 #ifdef GR_UHD_USE_STREAM_API
       _samps_per_packet = 1;
