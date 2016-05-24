@@ -80,12 +80,12 @@ namespace gr {
       _samp_rate = this->get_samp_rate();
       _center_freq = this->get_center_freq(0);
       
-		FullBuffSize = (unsigned long)_samp_rate;// 总存储数=每秒采样的点数
-		PreBuffSize = FullBuffSize / 10;// 预缓存数=100ms采样的点数
+		FullBuffSize = (unsigned long)_samp_rate * 2;// 总共存2秒的数据
+		PreBuffSize = FullBuffSize / 4;// 预缓存500ms
 		Counter = 0;// 计数器清零
 		TriPos = 0;// 标记清零
 		TriFlag = false;// 重置标志
-		TriThreshold = 0.1;
+		// TriThreshold = 0.000001;
       
 #ifdef GR_UHD_USE_STREAM_API
       _samps_per_packet = 1;
@@ -554,7 +554,8 @@ namespace gr {
 				{
 					TriFlag = true;
 					TriPos = Counter;
-					Counter = PreBuffSize;	
+					Counter = PreBuffSize;
+					std::cout << "tmp > TriThreshold" << std::endl;
 				}
 				else
 				{
@@ -647,7 +648,6 @@ namespace gr {
 		ofs.open(fileName.c_str(), std::ofstream::out | std::ofstream::binary);
 		for (long int i = TriPos; i < PreBuffSize; i++)
 		{
-			
 			ofs.write((char*)&SampBuffArray[i], sizeof(SampBuffArray[i]));
 		}
 		for (long int i = 0; i < TriPos; i++)
