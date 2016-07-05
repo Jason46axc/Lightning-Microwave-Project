@@ -31,6 +31,7 @@
 #include <ctime>
 #include <cstdio>
 #include <fstream>
+#include <time.h>
 
 namespace gr {
   namespace uhd {
@@ -81,7 +82,9 @@ namespace gr {
       _center_freq = this->get_center_freq(0);
       
 		FullBuffSize = (unsigned long)_samp_rate * 2;// 总共存2秒的数据
+		// FullBuffSize = (unsigned long)_samp_rate;
 		PreBuffSize = FullBuffSize / 4;// 预缓存500ms
+		// PreBuffSize = FullBuffSize / 10;
 		Counter = 0;// 计数器清零
 		TriPos = 0;// 标记清零
 		TriFlag = false;// 重置标志
@@ -381,6 +384,7 @@ namespace gr {
 	usrp_source_impl::set_threshold(double threshold)
 	{
 		TriThreshold = threshold;
+		// double aaataaaa = threshold;
 	}
 
     void
@@ -575,6 +579,7 @@ namespace gr {
 				else
 				{
 					save_buff_to_file();
+					std::cout << "saved" << std::endl;
 					TriFlag = false;
 					TriPos = 0;
 					Counter = 0;
@@ -639,11 +644,14 @@ namespace gr {
     usrp_source_impl::save_buff_to_file()
     {
 		time_t epochTime = _dev->get_mboard_sensor("gps_time").to_int();
+		if (epochTime < 1400000000)
+		{
+			time(&epochTime);
+		}
 		struct tm * utcTime = gmtime(&epochTime);
 		char dateTime[50];
-		// sprintf(dateTime, "%4d%02d%02d%02d%02d%02d", 1900 + utcTime->tm_year, utcTime->tm_mon, utcTime->tm_mday, utcTime->tm_hour, utcTime->tm_min, utcTime->tm_sec);
 		strftime(dateTime, 50, "%Y%m%d%H%M%S", utcTime);
-		std::string fileName = "./data/" + (std::string)dateTime + ".dat";
+		std::string fileName = "/home/shili/data/" + (std::string)dateTime + ".dat";
 		std::ofstream ofs;
 		ofs.open(fileName.c_str(), std::ofstream::out | std::ofstream::binary);
 		for (long int i = TriPos; i < PreBuffSize; i++)
@@ -659,6 +667,7 @@ namespace gr {
 			ofs.write((char*)&SampBuffArray[i], sizeof(SampBuffArray[i]));
 		}
 		ofs.close();
+		std::cout << "saving" << std::endl;
     }
 
   } /* namespace uhd */
